@@ -2,13 +2,11 @@ import znc
 import re
 
 class inbox(znc.Module):
-	triggers = []
+	triggers = set() 
 	storageName = "inboxLines"
 
 	def OnLoad(self, args, msg):
-		self.triggers.append(self.GetUser().GetNick())
-		self.regex = re.compile(self.makeRegex(), flags=re.IGNORECASE)
-		self.PutModule("Loaded triggers: %s" % ",".join(self.triggers))
+		self.addTrigger(self.GetUser().GetNick())
 		self.lines = self.read()
 		
 		return znc.CONTINUE
@@ -27,6 +25,12 @@ class inbox(znc.Module):
 				self.printout(self.lines[-count:])
 			except ValueError:
 				self.PutModule("Invalid syntax. %s does not appear to be a number" % command[5:])
+		elif command[:12] == "add trigger ":
+			trigger = command[12:]
+			if len(trigger) > 0:
+				self.addTrigger(trigger)
+			else:
+				self.PutModule("Can't add an empty trigger")
 		elif command == "debug":
 			self.PutModule("%d lines stored" % len(self.lines))
 			self.PutModule(repr(self.lines))
@@ -46,6 +50,11 @@ class inbox(znc.Module):
 			return
 		for line in lines:
 			self.PutModule(line)
+	
+	def addTrigger(self, trigger):
+		self.triggers.add(trigger)
+		self.regex = re.compile(self.makeRegex(), flags=re.IGNORECASE)
+		self.PutModule("Loaded triggers: %s" % ", ".join(self.triggers))
 
 	def makeRegex(self):
 		escaped = map(lambda t: re.escape(t), self.triggers)
