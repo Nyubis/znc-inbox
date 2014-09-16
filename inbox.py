@@ -22,8 +22,11 @@ class inbox(znc.Module):
 
 	def OnModCommand(self, command):
 		if command[:5] == "show ":
-			count = int(command[5:])
-			self.printout(self.lines[-count:])
+			try:
+				count = int(command[5:])
+				self.printout(self.lines[-count:])
+			except ValueError:
+				self.PutModule("Invalid syntax. %s does not appear to be a number" % command[5:])
 		elif command == "debug":
 			self.PutModule("%d lines stored" % len(self.lines))
 			self.PutModule(repr(self.lines))
@@ -38,6 +41,9 @@ class inbox(znc.Module):
 		return stored.split("\n") if stored != '' else []
 
 	def printout(self, lines):
+		if len(lines) == 0:
+			self.PutModule("No lines found")
+			return
 		for line in lines:
 			self.PutModule(line)
 
