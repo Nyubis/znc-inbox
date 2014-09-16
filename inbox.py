@@ -3,9 +3,11 @@ import re
 
 class inbox(znc.Module):
 	triggers = set() 
-	storageName = "inboxLines"
+	lineStorage = "inboxLines"
+	triggerStorage = "inboxTriggers"
 
 	def OnLoad(self, args, msg):
+		self.readTriggers()
 		self.addTrigger(self.GetUser().GetNick())
 		self.lines = self.read()
 		
@@ -38,10 +40,10 @@ class inbox(znc.Module):
 		return znc.CONTINUE
 
 	def write(self, lines):
-		self.SetNV(self.storageName, "\n".join(lines))
+		self.SetNV(self.lineStorage, "\n".join(lines))
 
 	def read(self):
-		stored = self.GetNV(self.storageName)
+		stored = self.GetNV(self.lineStorage)
 		return stored.split("\n") if stored != '' else []
 
 	def printout(self, lines):
@@ -50,11 +52,22 @@ class inbox(znc.Module):
 			return
 		for line in lines:
 			self.PutModule(line)
-	
+
 	def addTrigger(self, trigger):
 		self.triggers.add(trigger)
 		self.regex = re.compile(self.makeRegex(), flags=re.IGNORECASE)
-		self.PutModule("Loaded triggers: %s" % ", ".join(self.triggers))
+		self.writeTriggers(self.triggers)
+		self.PutModule("Current triggers: %s" % ", ".join(self.triggers))
+
+	def writeTriggers(self, triggers):
+		self.SetNV(self.triggerStorage, '\n'.join(triggers))
+
+	def readTriggers(self):
+		stored = self.GetNV(self.triggerStorage)
+		if len(stored) > 0:
+			triggers = stored.split('\n')
+			for trigger in triggers:
+				self.addTrigger(trigger)
 
 	def makeRegex(self):
 		escaped = map(lambda t: re.escape(t), self.triggers)
