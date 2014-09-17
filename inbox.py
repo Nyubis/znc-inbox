@@ -31,6 +31,9 @@ class inbox(znc.Module):
 		keyword = words[0]
 		if keyword in self.commands:
 			self.commands[keyword](words[1:])
+		else:
+			self.PutModule("Unknown command. Known commands are %s" %
+					", ".join(self.commands.keys()))
 
 		return znc.CONTINUE
 
