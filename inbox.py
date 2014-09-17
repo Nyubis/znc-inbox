@@ -62,6 +62,7 @@ class inbox(znc.Module):
 			if params[0] in self.triggers:
 				self.triggers.remove(params[0])
 				self.writeTriggers(self.triggers)
+				self.PutModule("Current triggers: %s" % ", ".join(self.triggers))
 			else:
 				self.PutModule("No such trigger")
 		else:
