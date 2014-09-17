@@ -10,6 +10,11 @@ class inbox(znc.Module):
 		self.readTriggers()
 		self.addTrigger(self.GetUser().GetNick())
 		self.lines = self.read()
+		self.commands = {
+			'show': self.com_show,
+			'add-trigger': self.com_addTrigger,
+			'debug': self.com_debug
+		}
 		
 		return znc.CONTINUE
 
@@ -21,23 +26,32 @@ class inbox(znc.Module):
 		return znc.CONTINUE
 
 	def OnModCommand(self, command):
-		if command[:5] == "show ":
-			try:
-				count = int(command[5:])
-				self.printout(self.lines[-count:])
-			except ValueError:
-				self.PutModule("Invalid syntax. %s does not appear to be a number" % command[5:])
-		elif command[:12] == "add trigger ":
-			trigger = command[12:]
-			if len(trigger) > 0:
-				self.addTrigger(trigger)
-			else:
-				self.PutModule("Can't add an empty trigger")
-		elif command == "debug":
-			self.PutModule("%d lines stored" % len(self.lines))
-			self.PutModule(repr(self.lines))
+		words = command.split(' ')
+		keyword = words[0]
+		if keyword in self.commands:
+			self.commands[keyword](words[1:])
 
 		return znc.CONTINUE
+
+	def com_show(self, params):
+		if len(params) == 0:
+			self.PutModule("Specify how many lines you want to see, e.g.: show 5")
+			return
+		try:
+			count = int(params[0])
+			self.printout(self.lines[-count:])
+		except ValueError:
+			self.PutModule("Invalid syntax. %s does not appear to be a number" % params[0])
+
+	def com_debug(self, params):
+		self.PutModule("%d lines stored" % len(self.lines))
+		self.PutModule(repr(self.lines))
+		
+	def com_addTrigger(self, params):
+		if len(params) > 0 and len(params[0]) > 0:
+			self.addTrigger(trigger)
+		else:
+			self.PutModule("Can't add an empty trigger")
 
 	def write(self, lines):
 		self.SetNV(self.lineStorage, "\n".join(lines))
