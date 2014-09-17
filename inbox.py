@@ -13,6 +13,7 @@ class inbox(znc.Module):
 		self.commands = {
 			'show': self.com_show,
 			'add-trigger': self.com_addTrigger,
+			'remove-trigger': self.com_rmTrigger,
 			'debug': self.com_debug
 		}
 		
@@ -49,9 +50,20 @@ class inbox(znc.Module):
 		
 	def com_addTrigger(self, params):
 		if len(params) > 0 and len(params[0]) > 0:
-			self.addTrigger(trigger)
+			self.addTrigger(params[0])
 		else:
 			self.PutModule("Can't add an empty trigger")
+
+	def com_rmTrigger(self, params):
+		if len(params) > 0 and len(params[0]) > 0:
+			if params[0] in self.triggers:
+				self.triggers.remove(params[0])
+				self.writeTriggers(self.triggers)
+			else:
+				self.PutModule("No such trigger")
+		else:
+			self.PutModule("Can't remove an empty trigger")
+
 
 	def write(self, lines):
 		self.SetNV(self.lineStorage, "\n".join(lines))
