@@ -10,6 +10,7 @@ class inbox(znc.Module):
 		self.readTriggers()
 		self.addTrigger(self.GetUser().GetNick())
 		self.lines = self.read()
+		self.missedLineCount = 0
 		self.commands = {
 			'show': self.com_show,
 			'add-trigger': self.com_addTrigger,
@@ -23,6 +24,8 @@ class inbox(znc.Module):
 		if self.regex.search(str(msg.s)) != None:
 			self.lines.append("<%s> %s" % (nick, msg.s))
 			self.write(self.lines)
+		if not self.connected:
+			self.missedLineCount += 1
 
 		return znc.CONTINUE
 
@@ -37,6 +40,22 @@ class inbox(znc.Module):
 
 		return znc.CONTINUE
 
+	def OnClientLogin(self):
+		self.connected = True
+		if self.missedLineCount == 0:
+			return znc.CONTINUE
+
+		missedLines = self.lines[-self.missedLineCount:]
+		for line in missedLines:
+			self.PutModule(line)
+
+		return znc.CONTINUE
+
+	def OnClientDisconnect(self):
+		self.connected = False
+
+		return znc.CONTINUE
+
 	def com_show(self, params):
 		if len(params) == 0:
 			self.PutModule("Specify how many lines you want to see, e.g.: show 5")
@@ -48,6 +67,7 @@ class inbox(znc.Module):
 			self.PutModule("Invalid syntax. %s does not appear to be a number" % params[0])
 
 	def com_debug(self, params):
+		self.PutModule("triggers: %s" % repr(triggers))
 		self.PutModule("%d lines stored" % len(self.lines))
 		self.PutModule(repr(self.lines))
 		
