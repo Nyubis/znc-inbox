@@ -48,6 +48,7 @@ class inbox(znc.Module):
 		missedLines = self.lines[-self.missedLineCount:]
 		for line in missedLines:
 			self.PutModule(line)
+		self.missedLineCount = 0
 
 		return znc.CONTINUE
 
