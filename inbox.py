@@ -8,7 +8,7 @@ class inbox(znc.Module):
 
 	def OnLoad(self, args, msg):
 		self.readTriggers()
-		self.addTrigger(self.GetUser().GetNick())
+		self.addTrigger(self.GetUser().GetNick(), printout=False)
 		self.lines = self.read()
 		self.missedLineCount = 0
 		self.commands = {
@@ -104,11 +104,12 @@ class inbox(znc.Module):
 		for line in lines:
 			self.PutModule(line)
 
-	def addTrigger(self, trigger):
+	def addTrigger(self, trigger, printout=True):
 		self.triggers.add(trigger)
 		self.regex = re.compile(self.makeRegex(), flags=re.IGNORECASE)
 		self.writeTriggers(self.triggers)
-		self.PutModule("Current triggers: %s" % ", ".join(self.triggers))
+		if printout:
+			self.PutModule("Current triggers: %s" % ", ".join(self.triggers))
 
 	def writeTriggers(self, triggers):
 		self.SetNV(self.triggerStorage, '\n'.join(triggers))
@@ -118,7 +119,7 @@ class inbox(znc.Module):
 		if len(stored) > 0:
 			triggers = stored.split('\n')
 			for trigger in triggers:
-				self.addTrigger(trigger)
+				self.addTrigger(trigger, printout=False)
 
 	def makeRegex(self):
 		escaped = map(lambda t: re.escape(t), self.triggers)
