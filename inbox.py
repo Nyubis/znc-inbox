@@ -24,8 +24,8 @@ class inbox(znc.Module):
 		if self.regex.search(str(msg.s)) != None:
 			self.lines.append("<%s> %s" % (nick, msg.s))
 			self.write(self.lines)
-		if not self.connected:
-			self.missedLineCount += 1
+			if not self.connected:
+				self.missedLineCount += 1
 
 		return znc.CONTINUE
 
