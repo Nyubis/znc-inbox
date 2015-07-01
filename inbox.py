@@ -1,5 +1,6 @@
 import znc
 import re
+from datetime import datetime
 
 class inbox(znc.Module):
 	triggers = set() 
@@ -11,8 +12,10 @@ class inbox(znc.Module):
 		self.addTrigger(self.GetUser().GetNick(), printout=False)
 		self.lines = self.read()
 		self.missedLineCount = 0
+		self.short_regex = re.compile("\<.*$")
 		self.commands = {
 			'show': self.com_show,
+			'show-v': self.com_showVerbose,
 			'add-trigger': self.com_addTrigger,
 			'remove-trigger': self.com_rmTrigger,
 			'debug': self.com_debug
@@ -22,7 +25,8 @@ class inbox(znc.Module):
 
 	def OnChanMsg(self, nick, channel, msg):
 		if self.regex.search(str(msg.s)) != None:
-			self.lines.append("<%s> %s" % (nick, msg.s))
+			timestamp = datetime.now().strftime("%d/%m %H:%M")
+			self.lines.append("%s [%s] <%s> %s" % (channel, timestamp, nick, msg.s))
 			self.write(self.lines)
 			if not self.connected:
 				self.missedLineCount += 1
@@ -57,15 +61,22 @@ class inbox(znc.Module):
 
 		return znc.CONTINUE
 
-	def com_show(self, params):
+	def com_show(self, params, verbose=False):
 		if len(params) == 0:
 			self.PutModule("Specify how many lines you want to see, e.g.: show 5")
 			return
 		try:
 			count = int(params[0])
-			self.printout(self.lines[-count:])
+			if verbose:
+				self.printout(self.lines[-count:])
+			else:
+				l = lambda x: self.short_regex.search(x).group()
+				self.printout(list(map(l, self.lines[-count:])))
 		except ValueError:
 			self.PutModule("Invalid syntax. %s does not appear to be a number" % params[0])
+
+	def com_showVerbose(self, params):
+		self.com_show(params, verbose=True)
 
 	def com_debug(self, params):
 		self.PutModule("triggers: %s" % repr(triggers))
